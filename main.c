@@ -2,8 +2,7 @@
 
 #include <SDL.h>
 
-#define SCREEN_WIDTH 640.0
-#define SCREEN_HEIGHT 480.0
+#include "game.h"
 
 int main(void)
 {
@@ -27,15 +26,27 @@ int main(void)
     return EXIT_FAILURE;
   }
 
-  int is_running = 1;
+  game_t game = {
+    .board = { 
+              EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,  
+              EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,  
+              EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,  
+              EMPTY, EMPTY, EMPTY, WHITE, BLACK, EMPTY, EMPTY, EMPTY,  
+              EMPTY, EMPTY, EMPTY, BLACK, WHITE, EMPTY, EMPTY, EMPTY,  
+              EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,  
+              EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,  
+              EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,  
+            },
+    .player = BLACK,
+    .state = STATE_RUNNING
+  };
 
   SDL_Event e;
-  while (is_running) {
+  while (game.state == STATE_RUNNING) {
     while (SDL_PollEvent(&e)) {
       switch (e.type) {
         case SDL_QUIT:
-          printf("Quitting!\n");
-          is_running = 0;
+          game.state = STATE_QUIT;
           break;
 
         case SDL_MOUSEBUTTONDOWN:
