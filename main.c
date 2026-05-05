@@ -19,6 +19,38 @@ int main(void)
     return EXIT_FAILURE;
   }
 
+  SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+
+  if (renderer == NULL) {
+    SDL_DestroyWindow(window);
+    fprintf(stderr, "SDL_CreateRenderer Error: %s\n", SDL_GetError());
+    return EXIT_FAILURE;
+  }
+
+  int is_running = 1;
+
+  SDL_Event e;
+  while (is_running) {
+    while (SDL_PollEvent(&e)) {
+      switch (e.type) {
+        case SDL_QUIT:
+          printf("Quitting!\n");
+          is_running = 0;
+          break;
+
+        case SDL_MOUSEBUTTONDOWN:
+          printf("Click!\n");
+          break;
+
+        default: {}
+      }
+
+      SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+      SDL_RenderClear(renderer);
+      SDL_RenderPresent(renderer);
+    }
+  }
+
   SDL_DestroyWindow(window);
   SDL_Quit();
 
