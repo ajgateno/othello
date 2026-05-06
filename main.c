@@ -3,6 +3,7 @@
 #include <SDL.h>
 
 #include "game.h"
+#include "logic.h"
 #include "rendering.h"
 
 int main(void)
@@ -51,7 +52,7 @@ int main(void)
           break;
 
         case SDL_MOUSEBUTTONDOWN:
-          printf("Click!\n");
+          click_on_cell(&game, e.button.y / CELL_HEIGHT, e.button.x / CELL_WIDTH);
           break;
 
         default: {}

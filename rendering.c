@@ -19,16 +19,44 @@ void render_grid(SDL_Renderer *renderer, const SDL_Color *color)
   }
 }
 
+void render_piece(SDL_Renderer *renderer, int row, int column, const SDL_Color *color) 
+{
+  const float half_box_side = fmin(CELL_WIDTH, CELL_HEIGHT) * 0.25;
+  const float center_x = CELL_WIDTH * 0.5 + column * CELL_WIDTH;
+  const float center_y = CELL_HEIGHT * 0.5 + row * CELL_HEIGHT;
+
+  filledCircleRGBA(renderer, center_x, center_y, half_box_side + 5, color->r, color->g, color->b, 255);
+}
+
+void render_board(SDL_Renderer *renderer, const int *board, const SDL_Color *black_color, const SDL_Color *white_color)
+{
+  for (int i = 0; i < N; ++i) {
+    for (int j = 0; j < N; ++j) {
+      switch (board[i * N + j]) {
+        case BLACK:
+          render_piece(renderer, i, j, black_color);
+          break;
+
+        case WHITE:
+          render_piece(renderer, i, j, white_color);
+          break;
+
+        default: {}
+      }
+    }
+  }
+}
+
 void render_running_state(SDL_Renderer *renderer, const game_t *game)
 {
   render_grid(renderer, &GRID_COLOR);
-  // TODO render board
+  render_board(renderer, game->board, &BLACK_COLOR, &WHITE_COLOR);
 }
 
 void render_game_over_state(SDL_Renderer *renderer, const game_t *game, const SDL_Color *color)
 {
   render_grid(renderer, color);
-  // TODO render board
+  render_board(renderer, game->board, color, color);
 }
 
 void render_game(SDL_Renderer *renderer, const game_t *game)
