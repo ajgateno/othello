@@ -10,6 +10,7 @@
 #define EMPTY 0
 #define BLACK 1
 #define WHITE 2
+#define POSSIBLE 3
 
 #define STATE_RUNNING 0
 #define STATE_BLACK_WON 1

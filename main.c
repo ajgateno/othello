@@ -43,6 +43,8 @@ int main(void)
     .state = STATE_RUNNING
   };
 
+  set_possible_moves(&game);
+
   SDL_Event e;
   while (game.state == STATE_RUNNING) {
     while (SDL_PollEvent(&e)) {
@@ -52,7 +54,30 @@ int main(void)
           break;
 
         case SDL_MOUSEBUTTONDOWN:
+          for (int i = 0; i < N; ++i) {
+            for (int j = 0; j < N; ++j) {
+              switch(game.board[i * N + j]) {
+                case BLACK:
+                  printf("BLACK ");
+                  break;
+
+                case WHITE:
+                  printf("WHITE ");
+                  break;
+
+                case POSSIBLE:
+                  printf("POSSI ");
+                  break;
+
+                default: 
+                  printf("EMPTY ");
+              }
+            }
+            printf("\n");
+          }
+          printf("\n");
           click_on_cell(&game, e.button.y / CELL_HEIGHT, e.button.x / CELL_WIDTH);
+          set_possible_moves(&game);
           break;
 
         default: {}

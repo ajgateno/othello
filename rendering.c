@@ -8,6 +8,7 @@
 const SDL_Color GRID_COLOR = { .r = 255, .g = 255, .b = 255 };
 const SDL_Color BLACK_COLOR = { .r = 50, .g = 50, .b = 50 };
 const SDL_Color WHITE_COLOR = { .r = 200, .g = 200, .b = 200 };
+const SDL_Color POSSIBLE_COLOR = { .r = 255, .g = 100, .b = 100 };
 
 void render_grid(SDL_Renderer *renderer, const SDL_Color *color)
 {
@@ -39,6 +40,10 @@ void render_board(SDL_Renderer *renderer, const int *board, const SDL_Color *bla
 
         case WHITE:
           render_piece(renderer, i, j, white_color);
+          break;
+
+        case POSSIBLE:
+          render_piece(renderer, i, j, &POSSIBLE_COLOR);
           break;
 
         default: {}
