@@ -23,7 +23,7 @@ void reset_game(game_t *game)
 {
   game->player = BLACK;
   game->state = STATE_RUNNING;
-  game -> board = { 
+  game->board = { 
             EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,  
             EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,  
             EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY, EMPTY,  
