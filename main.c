@@ -3,6 +3,7 @@
 #include <SDL.h>
 
 #include "game.h"
+#include "rendering.h"
 
 int main(void)
 {
@@ -58,6 +59,7 @@ int main(void)
 
       SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
       SDL_RenderClear(renderer);
+      render_game(renderer, &game);
       SDL_RenderPresent(renderer);
     }
   }
