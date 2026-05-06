@@ -54,30 +54,10 @@ int main(void)
           break;
 
         case SDL_MOUSEBUTTONDOWN:
-          for (int i = 0; i < N; ++i) {
-            for (int j = 0; j < N; ++j) {
-              switch(game.board[i * N + j]) {
-                case BLACK:
-                  printf("BLACK ");
-                  break;
-
-                case WHITE:
-                  printf("WHITE ");
-                  break;
-
-                case POSSIBLE:
-                  printf("POSSI ");
-                  break;
-
-                default: 
-                  printf("EMPTY ");
-              }
-            }
-            printf("\n");
-          }
-          printf("\n");
           click_on_cell(&game, e.button.y / CELL_HEIGHT, e.button.x / CELL_WIDTH);
+          printf("Clicked on cell\n");
           set_possible_moves(&game);
+          printf("Set the possible moves\n");
           break;
 
         default: {}
