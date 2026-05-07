@@ -3,7 +3,8 @@
 #include "game.h"
 #include "logic.h"
 
-int row_chains[2][N * N] = {0};
+int row_chains[2][N * N];
+int col_chains[2][N * N];
 
 void switch_player(game_t *game)
 {
@@ -39,9 +40,12 @@ void set_possible_moves(game_t *game)
     opposite_player = BLACK;
   }
 
-  // for each row, figure out all intervals of consecutive opposite pieces
+  // for each row and column, figure out all intervals of consecutive opposite pieces
   int num_row_chains = 0;
   int in_row_chain = 0;
+
+  int num_col_chains = 0;
+  int in_col_chain = 0;
 
   for (int i = 0; i < N; ++i) {
     for (int j = 0; j < N; ++j) {
@@ -67,6 +71,29 @@ void set_possible_moves(game_t *game)
           ++num_row_chains;
         }
       }
+
+      // Entering a col chain
+      if (!in_col_chain && game->board[j * N + i] == opposite_player) {
+        in_col_chain = 1;
+        col_chains[num_col_chains][0] = j * N + i;
+      }
+
+      // Leaving a col chain
+      if (in_col_chain) {
+        // Broken because the current block is not in the chain
+        if (game->board[j * N + i] != opposite_player) {
+          in_col_chain = 0;
+          col_chains[num_col_chains][1] = j * N + i - N;
+          ++num_col_chains;
+        }
+
+        // Broken because we're at the end of the col
+        if (i == N - 1) {
+          in_col_chain = 0;
+          col_chains[num_col_chains][1] = i * N + j;
+          ++num_col_chains;
+        }
+      }
     }
   }
 
@@ -80,6 +107,16 @@ void set_possible_moves(game_t *game)
       } else if (game->board[row_chains[i][0] - 1] == EMPTY && game->board[row_chains[i][1] + 1] == game->player) {
         game->board[row_chains[i][0] - 1] = POSSIBLE;
         game->row_endpoints[1 * (N * N) + row_chains[i][0] - 1] = row_chains[i][1] + 1;
+      }
+    }
+
+    if ((col_chains[i][0] / N > 0) && ((col_chains[i][1] / N) < N - 1)) {
+      if (game->board[col_chains[i][0] - N] == game->player && game->board[col_chains[i][1] + N] == EMPTY) {
+        game->board[col_chains[i][1] + N] = POSSIBLE;
+        game->col_endpoints[0 * (N * N) + col_chains[i][1] + N] = col_chains[i][0] - N;
+      } else if (game->board[col_chains[i][0] - N] == EMPTY && game->board[col_chains[i][1] + N] == game->player) {
+        game->board[col_chains[i][0] - N] = POSSIBLE;
+        game->col_endpoints[1 * (N * N) + col_chains[i][0] - N] = col_chains[i][1] + N;
       }
     }
   }
