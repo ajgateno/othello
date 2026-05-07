@@ -55,9 +55,7 @@ int main(void)
 
         case SDL_MOUSEBUTTONDOWN:
           click_on_cell(&game, e.button.y / CELL_HEIGHT, e.button.x / CELL_WIDTH);
-          printf("Clicked on cell\n");
           set_possible_moves(&game);
-          printf("Set the possible moves\n");
           break;
 
         default: {}

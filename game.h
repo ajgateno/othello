@@ -22,6 +22,8 @@ typedef struct {
   int board[N * N];
   int player;
   int state;
+  int row_endpoints[2 * N * N];
+  int col_endpoints[2 * N * N];
 } game_t;
 
 #endif // GAME_H_

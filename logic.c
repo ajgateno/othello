@@ -3,7 +3,7 @@
 #include "game.h"
 #include "logic.h"
 
-int row_chains[2][N] = { 0 };
+int row_chains[2][N * N] = {0};
 
 void switch_player(game_t *game)
 {
@@ -23,6 +23,15 @@ void set_possible_moves(game_t *game)
     }
   }
 
+  // clear all previously set endpoints
+  for (int i = 0; i < N * N; ++i) {
+    game->row_endpoints[0 * (N * N) + i] = -1;
+    game->row_endpoints[1 * (N * N) + i] = -1;
+
+    game->col_endpoints[0 * (N * N) + i] = -1;
+    game->col_endpoints[1 * (N * N) + i] = -1;
+  }
+
   int opposite_player;
   if (game->player == BLACK) {
     opposite_player = WHITE;
@@ -34,36 +43,12 @@ void set_possible_moves(game_t *game)
   int num_row_chains = 0;
   int in_row_chain = 0;
 
-  printf("\n");
-  printf("player: ");
-  switch(game->player) {
-    case BLACK:
-      printf("BLACK\n");
-      break;
-
-    case WHITE:
-      printf("WHITE\n");
-      break;
-  }
-
-  printf("opposite player: ");
-  switch(opposite_player) {
-    case BLACK:
-      printf("BLACK\n");
-      break;
-
-    case WHITE:
-      printf("WHITE\n");
-      break;
-  }
-
   for (int i = 0; i < N; ++i) {
     for (int j = 0; j < N; ++j) {
       // Entering a row chain
       if (!in_row_chain && game->board[i * N + j] == opposite_player) {
         in_row_chain = 1;
         row_chains[num_row_chains][0] = i * N + j;
-        printf("Started at (%d, %d)\n", i, j);
       }
 
       // Leaving a row chain
@@ -72,7 +57,6 @@ void set_possible_moves(game_t *game)
         if (game->board[i * N + j] != opposite_player) {
           in_row_chain = 0;
           row_chains[num_row_chains][1] = i * N + j - 1;
-          printf("Ended at (%d, %d) because the chain was broken\n", i, j);
           ++num_row_chains;
         }
 
@@ -80,7 +64,6 @@ void set_possible_moves(game_t *game)
         if (j == N - 1) {
           in_row_chain = 0;
           row_chains[num_row_chains][1] = i * N + j;
-          printf("Ended at (%d, %d) because the row ended\n", i, j);
           ++num_row_chains;
         }
       }
@@ -89,50 +72,67 @@ void set_possible_moves(game_t *game)
 
   // For each chain, if one endpoint is yours, and the other one is empty,
   // the empty one should be set to possible.
-  printf("There are %d row chains\n", num_row_chains);
   for (int i = 0; i < num_row_chains; ++i) {
-    printf("Row chain from %d to %d\n", row_chains[i][0], row_chains[i][1]);
     if ((row_chains[i][0] % N > 0) && ((row_chains[i][1] % N) < N - 1)) {
-      printf("GOT HERE A (%d)\n", i);
       if (game->board[row_chains[i][0] - 1] == game->player && game->board[row_chains[i][1] + 1] == EMPTY) {
         game->board[row_chains[i][1] + 1] = POSSIBLE;
-      }
-      printf("GOT HERE B (%d)\n", i);
-      if (game->board[row_chains[i][0] - 1] == EMPTY && game->board[row_chains[i][1] + 1] == game->player) {
+        game->row_endpoints[0 * (N * N) + row_chains[i][1] + 1] = row_chains[i][0] - 1;
+      } else if (game->board[row_chains[i][0] - 1] == EMPTY && game->board[row_chains[i][1] + 1] == game->player) {
         game->board[row_chains[i][0] - 1] = POSSIBLE;
+        game->row_endpoints[1 * (N * N) + row_chains[i][0] - 1] = row_chains[i][1] + 1;
       }
-      printf("GOT HERE C (%d)\n", i);
+    }
+  }
+}
+
+void flip_adjacent(game_t *game, int row, int column)
+{
+  if (game->row_endpoints[0 * (N * N) + row * N + column] > -1) {
+    for (int i = game->row_endpoints[0 * (N * N) + row * N + column] + 1; i < row * N + column; ++i) {
+      if (game->board[i] == BLACK) {
+        game->board[i] = WHITE;
+      } else if (game->board[i] == WHITE) {
+        game->board[i] = BLACK;
+      }
     }
   }
 
-  for (int i = 0; i < N; ++i) {
-    for (int j = 0; j < N; ++j) {
-      switch(game->board[i * N + j]) {
-        case BLACK:
-          printf("BLACK ");
-          break;
-
-        case WHITE:
-          printf("WHITE ");
-          break;
-
-        case POSSIBLE:
-          printf("POSSI ");
-          break;
-
-        default: 
-          printf("EMPTY ");
+  if (game->row_endpoints[1 * (N * N) + row * N + column] > -1) {
+    for (int i = row * N + column + 1; i < game->row_endpoints[1 * (N * N) + row * N + column]; ++i) {
+      if (game->board[i] == BLACK) {
+        game->board[i] = WHITE;
+      } else if (game->board[i] == WHITE) {
+        game->board[i] = BLACK;
       }
     }
-    printf("\n");
   }
-  printf("\n");
+
+  if (game->col_endpoints[0 * (N * N) + row * N + column] > -1) {
+    for (int i = game->col_endpoints[0 * (N * N) + row * N + column] + 1; i < row * N + column; i += N) {
+      if (game->board[i] == BLACK) {
+        game->board[i] = WHITE;
+      } else if (game->board[i] == WHITE) {
+        game->board[i] = BLACK;
+      }
+    }
+  }
+
+  if (game->col_endpoints[1 * (N * N) + row * N + column] > -1) {
+    for (int i = row * N + column + 1; i < game->col_endpoints[1 * (N * N) + row * N + column]; i += N) {
+      if (game->board[i] == BLACK) {
+        game->board[i] = WHITE;
+      } else if (game->board[i] == WHITE) {
+        game->board[i] = BLACK;
+      }
+    }
+  }
 }
 
 void player_turn(game_t *game, int row, int column)
 {
   if (game->board[row * N + column] == POSSIBLE) {
     game->board[row * N + column] = game->player;
+    flip_adjacent(game, row, column);
     switch_player(game);
     // TODO: check if the game is over
   }
