@@ -6,6 +6,20 @@
 int row_chains[2][N * N];
 int col_chains[2][N * N];
 
+void buffer_row(game_t *game, int row)
+{
+  for (int col = 0; col < N; ++col) {
+    game->row_buffer[col] = row * N + col;
+  }
+}
+
+void buffer_col(game_t *game, int col)
+{
+  for (int row = 0; row < N; ++row) {
+    game->col_buffer[row] = row * N + col;
+  }
+}
+
 void switch_player(game_t *game)
 {
   if (game->player == BLACK) {
@@ -15,22 +29,10 @@ void switch_player(game_t *game)
   }
 }
 
-void set_possible_moves(game_t *game)
+void set_possible_move(game_t *game, int row, int column)
 {
-  // clear all possible moves from the previous turn
-  for (int i = 0; i < N * N; ++i) {
-    if (game->board[i] == POSSIBLE) {
-      game->board[i] = EMPTY;
-    }
-  }
-
-  // clear all previously set endpoints
-  for (int i = 0; i < N * N; ++i) {
-    game->row_endpoints[0 * (N * N) + i] = -1;
-    game->row_endpoints[1 * (N * N) + i] = -1;
-
-    game->col_endpoints[0 * (N * N) + i] = -1;
-    game->col_endpoints[1 * (N * N) + i] = -1;
+  if (game->board[row * N + column] != EMPTY) {
+    return;
   }
 
   int opposite_player;
@@ -40,127 +42,126 @@ void set_possible_moves(game_t *game)
     opposite_player = BLACK;
   }
 
-  // for each row and column, figure out all intervals of consecutive opposite pieces
-  int num_row_chains = 0;
-  int in_row_chain = 0;
+  int i;
 
-  int num_col_chains = 0;
-  int in_col_chain = 0;
+  // check left
+  for (i = column - 1; i > 0; --i) {
+    if (game->board[row * N + i] != opposite_player) {
+      break;
+    }
+  }
+  if (i < column - 1 && game->board[row * N + i] == game->player) {
+    game->possible_moves[row * N + column].left = i;
+  }
 
-  for (int i = 0; i < N; ++i) {
-    for (int j = 0; j < N; ++j) {
-      // Entering a row chain
-      if (!in_row_chain && game->board[i * N + j] == opposite_player) {
-        in_row_chain = 1;
-        row_chains[num_row_chains][0] = i * N + j;
-      }
+  // check right
+  for (i = column + 1; i < N; ++i) {
+    if (game->board[row * N + i] != opposite_player) {
+      break;
+    }
+  }
+  if (i > column + 1 && game->board[row * N + i] == game->player) {
+    game->possible_moves[row * N + column].right = i;
+  }
 
-      // Leaving a row chain
-      if (in_row_chain) {
-        // Broken because the current block is not in the chain
-        if (game->board[i * N + j] != opposite_player) {
-          in_row_chain = 0;
-          row_chains[num_row_chains][1] = i * N + j - 1;
-          ++num_row_chains;
-        }
+  // check up
+  for (i = row - 1; i > 0; --i) {
+    if (game->board[i * N + column] != opposite_player) {
+      break;
+    }
+  }
+  if (i < row - 1 && game->board[i * N + column] == game->player) {
+    game->possible_moves[row * N + column].up = i;
+  }
 
-        // Broken because we're at the end of the row
-        if (j == N - 1) {
-          in_row_chain = 0;
-          row_chains[num_row_chains][1] = i * N + j;
-          ++num_row_chains;
-        }
-      }
+  // check down
+  for (i = row + 1; i < N; ++i) {
+    if (game->board[i * N + column] != opposite_player) {
+      break;
+    }
+  }
+  if (i > row + 1 && game->board[i * N + column] == game->player) {
+    game->possible_moves[row * N + column].down = i;
+  }
+}
 
-      // Entering a col chain
-      if (!in_col_chain && game->board[j * N + i] == opposite_player) {
-        in_col_chain = 1;
-        col_chains[num_col_chains][0] = j * N + i;
-      }
-
-      // Leaving a col chain
-      if (in_col_chain) {
-        // Broken because the current block is not in the chain
-        if (game->board[j * N + i] != opposite_player) {
-          in_col_chain = 0;
-          col_chains[num_col_chains][1] = j * N + i - N;
-          ++num_col_chains;
-        }
-
-        // Broken because we're at the end of the col
-        if (i == N - 1) {
-          in_col_chain = 0;
-          col_chains[num_col_chains][1] = i * N + j;
-          ++num_col_chains;
-        }
-      }
+void set_possible_moves(game_t *game)
+{
+  // clear previous possible moves on the board
+  for (int i = 0; i < N * N; ++i) {
+    if (game->board[i] == POSSIBLE) {
+      game->board[i] = EMPTY;
     }
   }
 
-  // For each chain, if one endpoint is yours, and the other one is empty,
-  // the empty one should be set to possible.
-  for (int i = 0; i < num_row_chains; ++i) {
-    if ((row_chains[i][0] % N > 0) && ((row_chains[i][1] % N) < N - 1)) {
-      if (game->board[row_chains[i][0] - 1] == game->player && game->board[row_chains[i][1] + 1] == EMPTY) {
-        game->board[row_chains[i][1] + 1] = POSSIBLE;
-        game->row_endpoints[0 * (N * N) + row_chains[i][1] + 1] = row_chains[i][0] - 1;
-      } else if (game->board[row_chains[i][0] - 1] == EMPTY && game->board[row_chains[i][1] + 1] == game->player) {
-        game->board[row_chains[i][0] - 1] = POSSIBLE;
-        game->row_endpoints[1 * (N * N) + row_chains[i][0] - 1] = row_chains[i][1] + 1;
-      }
-    }
+  // clear previous possible moves on possible moves buffer
+  for (int i = 0; i < N * N; ++i) {
+    game->possible_moves[i].up = -1;
+    game->possible_moves[i].down = -1;
+    game->possible_moves[i].left = -1;
+    game->possible_moves[i].right = -1;
+  }
 
-    if ((col_chains[i][0] / N > 0) && ((col_chains[i][1] / N) < N - 1)) {
-      if (game->board[col_chains[i][0] - N] == game->player && game->board[col_chains[i][1] + N] == EMPTY) {
-        game->board[col_chains[i][1] + N] = POSSIBLE;
-        game->col_endpoints[0 * (N * N) + col_chains[i][1] + N] = col_chains[i][0] - N;
-      } else if (game->board[col_chains[i][0] - N] == EMPTY && game->board[col_chains[i][1] + N] == game->player) {
-        game->board[col_chains[i][0] - N] = POSSIBLE;
-        game->col_endpoints[1 * (N * N) + col_chains[i][0] - N] = col_chains[i][1] + N;
+  // Set all possible moves
+  for (int i = 0; i < N; ++i) {
+    for (int j = 0; j < N; ++j) {
+      set_possible_move(game, i, j);
+
+      if (game->possible_moves[i * N + j].up > -1) {
+        game->board[i * N + j] = POSSIBLE;
+      }
+
+      if (game->possible_moves[i * N + j].down > -1) {
+        game->board[i * N + j] = POSSIBLE;
+      }
+
+      if (game->possible_moves[i * N + j].left > -1) {
+        game->board[i * N + j] = POSSIBLE;
+      }
+
+      if (game->possible_moves[i * N + j].right > -1) {
+        game->board[i * N + j] = POSSIBLE;
       }
     }
   }
 }
 
+void flip_cell(game_t *game, int row, int column)
+{
+  if (game->board[row * N + column] == BLACK) {
+    game->board[row * N + column] = WHITE;
+  } else if (game->board[row * N + column] == WHITE) {
+    game->board[row * N + column] = BLACK;
+  }
+}
+
 void flip_adjacent(game_t *game, int row, int column)
 {
-  if (game->row_endpoints[0 * (N * N) + row * N + column] > -1) {
-    for (int i = game->row_endpoints[0 * (N * N) + row * N + column] + 1; i < row * N + column; ++i) {
-      if (game->board[i] == BLACK) {
-        game->board[i] = WHITE;
-      } else if (game->board[i] == WHITE) {
-        game->board[i] = BLACK;
-      }
+  // flip left
+  if (game->possible_moves[row * N + column].left > -1) {
+    for (int i = column - 1; i > game->possible_moves[row * N + column].left; --i) {
+      flip_cell(game, row, i);
     }
   }
 
-  if (game->row_endpoints[1 * (N * N) + row * N + column] > -1) {
-    for (int i = row * N + column + 1; i < game->row_endpoints[1 * (N * N) + row * N + column]; ++i) {
-      if (game->board[i] == BLACK) {
-        game->board[i] = WHITE;
-      } else if (game->board[i] == WHITE) {
-        game->board[i] = BLACK;
-      }
+  // flip right
+  if (game->possible_moves[row * N + column].right > -1) {
+    for (int i = column + 1; i < game->possible_moves[row * N + column].right; ++i) {
+      flip_cell(game, row, i);
     }
   }
 
-  if (game->col_endpoints[0 * (N * N) + row * N + column] > -1) {
-    for (int i = game->col_endpoints[0 * (N * N) + row * N + column] + N; i < row * N + column; i += N) {
-      if (game->board[i] == BLACK) {
-        game->board[i] = WHITE;
-      } else if (game->board[i] == WHITE) {
-        game->board[i] = BLACK;
-      }
+  // flip up
+  if (game->possible_moves[row * N + column].up > -1) {
+    for (int i = row - 1; i > game->possible_moves[row * N + column].up; --i) {
+      flip_cell(game, i, column);
     }
   }
 
-  if (game->col_endpoints[1 * (N * N) + row * N + column] > -1) {
-    for (int i = row * N + column + N; i < game->col_endpoints[1 * (N * N) + row * N + column]; i += N) {
-      if (game->board[i] == BLACK) {
-        game->board[i] = WHITE;
-      } else if (game->board[i] == WHITE) {
-        game->board[i] = BLACK;
-      }
+  // flip down
+  if (game->possible_moves[row * N + column].down > -1) {
+    for (int i = row + 1; i < game->possible_moves[row * N + column].down; ++i) {
+      flip_cell(game, i, column);
     }
   }
 }

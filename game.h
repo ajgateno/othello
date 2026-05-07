@@ -18,12 +18,24 @@
 #define STATE_DRAW 3
 #define STATE_QUIT 4
 
+// A -1 determines no possible move in that direction
+// A non-negative integer determines the position that bookends a move
+typedef struct {
+  int up;
+  int down;
+  int left;
+  int right;
+} possible_move_t;
+
 typedef struct {
   int board[N * N];
+  possible_move_t possible_moves[N * N];
+
   int player;
   int state;
-  int row_endpoints[2 * N * N];
-  int col_endpoints[2 * N * N];
+
+  int row_buffer[N];
+  int col_buffer[N];
 } game_t;
 
 #endif // GAME_H_
