@@ -46,7 +46,7 @@ int main(void)
   set_possible_moves(&game);
 
   SDL_Event e;
-  while (game.state == STATE_RUNNING) {
+  while (game.state != STATE_QUIT) {
     while (SDL_PollEvent(&e)) {
       switch (e.type) {
         case SDL_QUIT:

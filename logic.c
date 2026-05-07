@@ -85,6 +85,10 @@ void set_possible_moves(game_t *game)
     game->possible_moves[i].right = -1;
   }
 
+  if (game->state != STATE_RUNNING) {
+    return;
+  }
+
   // Set all possible moves
   for (int i = 0; i < N; ++i) {
     for (int j = 0; j < N; ++j) {
@@ -149,13 +153,44 @@ void flip_adjacent(game_t *game, int row, int column)
   }
 }
 
+int count_pieces(game_t *game, int piece_type) 
+{
+  int count = 0;
+
+  for (int i = 0; i < N * N; ++i) {
+    count += (game->board[i] == piece_type);
+  }
+
+  return count;
+}
+
+void check_game_over(game_t *game) 
+{
+  set_possible_moves(game);
+
+  if (count_pieces(game, POSSIBLE) == 0) {
+    int black_score = count_pieces(game, BLACK);
+    int white_score = count_pieces(game, WHITE);
+
+    if (black_score > white_score) {
+      game->state = STATE_BLACK_WON;
+    } else if (white_score > black_score) {
+      game->state = STATE_WHITE_WON;
+    } else {
+      game->state = STATE_DRAW;
+    }
+  }
+
+  set_possible_moves(game);
+}
+
 void player_turn(game_t *game, int row, int column)
 {
   if (game->board[row * N + column] == POSSIBLE) {
     game->board[row * N + column] = game->player;
     flip_adjacent(game, row, column);
     switch_player(game);
-    // TODO: check if the game is over
+    check_game_over(game);
   }
 }
 
