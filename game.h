@@ -25,6 +25,11 @@ typedef struct {
   int down;
   int left;
   int right;
+
+  int nw;
+  int ne;
+  int sw;
+  int se;
 } possible_move_t;
 
 typedef struct {

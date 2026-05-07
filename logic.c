@@ -12,12 +12,8 @@ void switch_player(game_t *game)
   }
 }
 
-void set_possible_move(game_t *game, int row, int column)
+int check_direction(game_t *game, int row, int column, int row_increment, int column_increment)
 {
-  if (game->board[row * N + column] != EMPTY) {
-    return;
-  }
-
   int opposite_player;
   if (game->player == BLACK) {
     opposite_player = WHITE;
@@ -27,45 +23,28 @@ void set_possible_move(game_t *game, int row, int column)
 
   int i;
 
-  // check left
-  for (i = column - 1; i > 0; --i) {
-    if (game->board[row * N + i] != opposite_player) {
+  for (i = 1; i < N; ++i) {
+    if (game->board[(row + i * row_increment) * N + (column + i * column_increment)] != opposite_player) {
       break;
     }
   }
-  if (i < column - 1 && game->board[row * N + i] == game->player) {
-    game->possible_moves[row * N + column].left = i;
+  if (i > 1 && game->board[(row + i * row_increment) * N + (column + i * column_increment)] == game->player) {
+    return (row + i * row_increment) * N + (column + i * column_increment);
   }
 
-  // check right
-  for (i = column + 1; i < N; ++i) {
-    if (game->board[row * N + i] != opposite_player) {
-      break;
-    }
-  }
-  if (i > column + 1 && game->board[row * N + i] == game->player) {
-    game->possible_moves[row * N + column].right = i;
+  return -1;
+}
+
+void set_possible_move(game_t *game, int row, int column)
+{
+  if (game->board[row * N + column] != EMPTY) {
+    return;
   }
 
-  // check up
-  for (i = row - 1; i > 0; --i) {
-    if (game->board[i * N + column] != opposite_player) {
-      break;
-    }
-  }
-  if (i < row - 1 && game->board[i * N + column] == game->player) {
-    game->possible_moves[row * N + column].up = i;
-  }
-
-  // check down
-  for (i = row + 1; i < N; ++i) {
-    if (game->board[i * N + column] != opposite_player) {
-      break;
-    }
-  }
-  if (i > row + 1 && game->board[i * N + column] == game->player) {
-    game->possible_moves[row * N + column].down = i;
-  }
+  game->possible_moves[row * N + column].left = check_direction(game, row, column, 0, -1);
+  game->possible_moves[row * N + column].right = check_direction(game, row, column, 0, 1);
+  game->possible_moves[row * N + column].up = check_direction(game, row, column, -1, 0);
+  game->possible_moves[row * N + column].down = check_direction(game, row, column, 1, 0);
 }
 
 void set_possible_moves(game_t *game)
@@ -83,6 +62,11 @@ void set_possible_moves(game_t *game)
     game->possible_moves[i].down = -1;
     game->possible_moves[i].left = -1;
     game->possible_moves[i].right = -1;
+
+    game->possible_moves[i].nw = -1;
+    game->possible_moves[i].ne = -1;
+    game->possible_moves[i].sw = -1;
+    game->possible_moves[i].se = -1;
   }
 
   if (game->state != STATE_RUNNING) {
@@ -109,6 +93,22 @@ void set_possible_moves(game_t *game)
       if (game->possible_moves[i * N + j].right > -1) {
         game->board[i * N + j] = POSSIBLE;
       }
+
+      if (game->possible_moves[i * N + j].nw > -1) {
+        game->board[i * N + j] = POSSIBLE;
+      }
+
+      if (game->possible_moves[i * N + j].ne > -1) {
+        game->board[i * N + j] = POSSIBLE;
+      }
+
+      if (game->possible_moves[i * N + j].sw > -1) {
+        game->board[i * N + j] = POSSIBLE;
+      }
+
+      if (game->possible_moves[i * N + j].se > -1) {
+        game->board[i * N + j] = POSSIBLE;
+      }
     }
   }
 }
@@ -122,34 +122,33 @@ void flip_cell(game_t *game, int row, int column)
   }
 }
 
+void flip_adjacent_direction(game_t *game, int row, int column, int row_increment, int column_increment, int endpoint)
+{
+  for (int i = 1; (row + i * row_increment) * N + (column + i * column_increment) != endpoint; ++i) {
+    flip_cell(game, row + i * row_increment, column + i * column_increment);
+  }
+}
+
 void flip_adjacent(game_t *game, int row, int column)
 {
   // flip left
   if (game->possible_moves[row * N + column].left > -1) {
-    for (int i = column - 1; i > game->possible_moves[row * N + column].left; --i) {
-      flip_cell(game, row, i);
-    }
+    flip_adjacent_direction(game, row, column, 0, -1, game->possible_moves[row * N + column].left);
   }
 
   // flip right
   if (game->possible_moves[row * N + column].right > -1) {
-    for (int i = column + 1; i < game->possible_moves[row * N + column].right; ++i) {
-      flip_cell(game, row, i);
-    }
+    flip_adjacent_direction(game, row, column, 0, 1, game->possible_moves[row * N + column].right);
   }
 
   // flip up
   if (game->possible_moves[row * N + column].up > -1) {
-    for (int i = row - 1; i > game->possible_moves[row * N + column].up; --i) {
-      flip_cell(game, i, column);
-    }
+    flip_adjacent_direction(game, row, column, -1, 0, game->possible_moves[row * N + column].up);
   }
 
   // flip down
   if (game->possible_moves[row * N + column].down > -1) {
-    for (int i = row + 1; i < game->possible_moves[row * N + column].down; ++i) {
-      flip_cell(game, i, column);
-    }
+    flip_adjacent_direction(game, row, column, 1, 0, game->possible_moves[row * N + column].down);
   }
 }
 
