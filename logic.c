@@ -145,7 +145,7 @@ void flip_adjacent(game_t *game, int row, int column)
   }
 
   if (game->col_endpoints[0 * (N * N) + row * N + column] > -1) {
-    for (int i = game->col_endpoints[0 * (N * N) + row * N + column] + 1; i < row * N + column; i += N) {
+    for (int i = game->col_endpoints[0 * (N * N) + row * N + column] + N; i < row * N + column; i += N) {
       if (game->board[i] == BLACK) {
         game->board[i] = WHITE;
       } else if (game->board[i] == WHITE) {
@@ -155,7 +155,7 @@ void flip_adjacent(game_t *game, int row, int column)
   }
 
   if (game->col_endpoints[1 * (N * N) + row * N + column] > -1) {
-    for (int i = row * N + column + 1; i < game->col_endpoints[1 * (N * N) + row * N + column]; i += N) {
+    for (int i = row * N + column + N; i < game->col_endpoints[1 * (N * N) + row * N + column]; i += N) {
       if (game->board[i] == BLACK) {
         game->board[i] = WHITE;
       } else if (game->board[i] == WHITE) {
