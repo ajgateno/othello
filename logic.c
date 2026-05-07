@@ -3,23 +3,6 @@
 #include "game.h"
 #include "logic.h"
 
-int row_chains[2][N * N];
-int col_chains[2][N * N];
-
-void buffer_row(game_t *game, int row)
-{
-  for (int col = 0; col < N; ++col) {
-    game->row_buffer[col] = row * N + col;
-  }
-}
-
-void buffer_col(game_t *game, int col)
-{
-  for (int row = 0; row < N; ++row) {
-    game->col_buffer[row] = row * N + col;
-  }
-}
-
 void switch_player(game_t *game)
 {
   if (game->player == BLACK) {

@@ -30,12 +30,8 @@ typedef struct {
 typedef struct {
   int board[N * N];
   possible_move_t possible_moves[N * N];
-
   int player;
   int state;
-
-  int row_buffer[N];
-  int col_buffer[N];
 } game_t;
 
 #endif // GAME_H_
