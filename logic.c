@@ -23,11 +23,16 @@ int check_direction(game_t *game, int row, int column, int row_increment, int co
 
   int i;
 
+  if (row + row_increment < 0 || row + row_increment >= N || column + column_increment < 0 || column + column_increment >= N) {
+    return -1;
+  }
+
   for (i = 1; i < N; ++i) {
     if (game->board[(row + i * row_increment) * N + (column + i * column_increment)] != opposite_player) {
       break;
     }
   }
+
   if (i > 1 && game->board[(row + i * row_increment) * N + (column + i * column_increment)] == game->player) {
     return (row + i * row_increment) * N + (column + i * column_increment);
   }
